@@ -1,0 +1,7 @@
+{
+  "name": "ytoyo",
+  "owner": { "name": "sorawittoto14-sketch" },
+  "plugins": [
+    { "name": "media-tools", "source": "./plugins/media-tools", "description": "Checks and installs FFmpeg, Whisper and Hyperframes; adds /media-tools" }
+  ]
+}
