@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>สรวิชญ์ (โตโต้) ผดุงพล</title>
+<meta name="description" content="เว็บแนะนำตัว นายสรวิชญ์ ผดุงพล (โตโต้) พร้อมกราฟเกรดเฉลี่ย ม.4–ม.6">
+<meta name="theme-color" content="#0b0b0b">
+<style>
+:root{
+  --bg:#0b0b0b; --bg2:#141414; --card:#1a1a1a; --line:#2c2c2c;
+  --text:#f2f2f2; --muted:#a6a6a6; --green:#76b900; --green2:#9be000;
+  --mark:#76b90033; --radius:14px;
+  --font:"Noto Sans Thai","Sarabun",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.75;font-size:17px;-webkit-text-size-adjust:100%}
+img{max-width:100%;display:block}
+a{color:inherit}
+.wrap{width:min(1120px,100% - 32px);margin-inline:auto}
+section{padding:72px 0}
+h1,h2,h3{line-height:1.25;margin:0}
+h2{font-size:clamp(1.7rem,4vw,2.5rem);font-weight:800;letter-spacing:-.01em}
+.eyebrow{color:var(--green);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.8rem;margin-bottom:10px}
+.lead{color:var(--muted);max-width:60ch;margin:10px 0 0}
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#000;font-weight:700;padding:12px 22px;border-radius:4px;text-decoration:none;border:0;cursor:pointer;font:inherit;font-weight:700;transition:.15s}
+.btn:hover{background:var(--green2)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid #555}
+.btn.ghost:hover{border-color:var(--green);color:var(--green)}
+:focus-visible{outline:2px solid var(--green2);outline-offset:3px}
+
+/* nav */
+header.nav{position:sticky;top:0;z-index:50;background:rgba(11,11,11,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;gap:12px}
+.logo{font-weight:800;text-decoration:none;display:flex;align-items:center;gap:8px}
+.logo i{width:12px;height:12px;background:var(--green);display:inline-block;border-radius:2px}
+.nav nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.nav nav a{padding:8px 12px;text-decoration:none;color:var(--muted);font-size:.95rem;white-space:nowrap;border-radius:4px}
+.nav nav a:hover{color:var(--green)}
+
+/* hero */
+.hero{padding:0;position:relative;overflow:hidden;background:
+  radial-gradient(900px 420px at 80% 30%,rgba(118,185,0,.22),transparent 60%),
+  linear-gradient(180deg,#0b0b0b,#101410)}
+.hero .wrap{display:grid;grid-template-columns:1.15fr .85fr;align-items:end;gap:20px;min-height:560px}
+.hero-copy{padding:72px 0}
+.hero h1{font-size:clamp(2.4rem,7vw,4.6rem);font-weight:800;letter-spacing:-.02em}
+.hero h1 span{color:var(--green)}
+.hero p{color:var(--muted);font-size:1.15rem;max-width:58ch;margin:18px 0 28px}
+.hero .cta{display:flex;flex-wrap:wrap;gap:12px}
+.hero-img{position:relative;align-self:end;display:flex;justify-content:center}
+.hero-img::before{content:"";position:absolute;inset:auto 8% 0 8%;height:78%;border:2px solid var(--green);border-bottom:0;border-radius:16px 16px 0 0;opacity:.55}
+.hero-img img{position:relative;width:min(360px,80%);filter:drop-shadow(0 20px 40px rgba(0,0,0,.6))}
+.tag{position:absolute;left:0;bottom:36px;background:var(--green);color:#000;font-weight:800;padding:6px 12px;font-size:.85rem;transform:rotate(-3deg)}
+
+/* chart */
+#gpa{background:var(--bg2);border-block:1px solid var(--line)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:28px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.stat b{display:block;font-size:1.9rem;color:var(--green);line-height:1.2}
+.stat span{color:var(--muted);font-size:.88rem}
+.chart-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 14px 10px;position:relative}
+#chart{width:100%;display:block;touch-action:manipulation}
+#chart text{font-family:var(--font)}
+.ax-title{fill:#d8d8d8;font-size:14px;font-weight:700}
+.tick{fill:var(--muted);font-size:12.5px}
+.xlab{fill:#e6e6e6;font-size:13px;font-weight:600}
+.grid{stroke:#2e2e2e;stroke-width:1}
+.band{fill:#76b90010}
+.band-t{fill:#6f8f2f;font-size:12px;font-weight:700;letter-spacing:.08em}
+.line{fill:none;stroke:var(--green);stroke-width:3.5;stroke-linejoin:round;stroke-linecap:round}
+.area{fill:url(#ag)}
+.pt{fill:#0b0b0b;stroke:var(--green);stroke-width:3;cursor:pointer;transition:r .12s}
+.pt.on{fill:var(--green);}
+.val{fill:#fff;font-size:15px;font-weight:800;paint-order:stroke;stroke:#1a1a1a;stroke-width:4px}
+.hl{stroke:var(--green);stroke-dasharray:4 4;opacity:.7}
+.detail{margin-top:12px;background:#101010;border:1px solid var(--line);border-left:4px solid var(--green);border-radius:8px;padding:12px 16px;display:flex;flex-wrap:wrap;gap:6px 24px;align-items:baseline;min-height:64px}
+.detail b{font-size:1.4rem;color:var(--green)}
+.detail .d{color:var(--muted)}
+.up{color:#9be000}.down{color:#ff8a65}
+.hint{color:var(--muted);font-size:.85rem;margin:10px 4px 6px}
+
+/* about */
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 18px}
+.tab{background:transparent;color:var(--muted);border:1px solid #444;padding:9px 16px;border-radius:999px;cursor:pointer;font:inherit;font-size:.95rem}
+.tab[aria-selected="true"]{background:var(--green);color:#000;border-color:var(--green);font-weight:700}
+.panels{display:grid;gap:16px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px 26px}
+.panel h3{font-size:1.1rem;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.chip{font-size:.75rem;font-weight:700;padding:2px 10px;border-radius:999px;background:#2a2a2a;color:#ddd}
+.chip.ai{background:var(--green);color:#000}
+.panel p{margin:0 0 1em;color:#e2e2e2}
+.panel p:last-child{margin:0}
+mark{background:var(--mark);color:#e9ffb8;border-bottom:2px solid var(--green);padding:0 2px;border-radius:2px}
+.panels[data-view="orig"] .p-ai,.panels[data-view="ai"] .p-orig{display:none}
+.panels[data-view="both"]{grid-template-columns:1fr 1fr;align-items:start}
+.legend{color:var(--muted);font-size:.9rem;margin-top:12px}
+.note{margin-top:18px;border:1px dashed #555;border-radius:var(--radius);padding:14px 18px;color:#cfcfcf;font-size:.95rem}
+.changes{margin-top:34px}
+.changes h3{font-size:1.3rem;margin-bottom:14px}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:10px}
+summary{cursor:pointer;padding:14px 18px;font-weight:700;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--green);font-size:1.3rem;line-height:1}
+details[open] summary::after{content:"–"}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 18px 16px}
+.cmp div{background:#101010;border-radius:8px;padding:12px 14px;font-size:.95rem}
+.cmp small{display:block;color:var(--muted);margin-bottom:4px;font-weight:700}
+.cmp .a small{color:var(--green)}
+.why{padding:0 18px 16px;color:var(--muted);font-size:.95rem;margin:0}
+.sum{margin:20px 0 0;padding-left:1.2em;color:#d6d6d6}
+.sum li{margin:4px 0}
+
+/* gallery */
+#gallery{background:var(--bg2);border-top:1px solid var(--line)}
+.mosaic{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:190px;grid-auto-flow:dense;gap:12px;margin-top:28px}
+.mosaic button{padding:0;border:0;background:#222;border-radius:var(--radius);overflow:hidden;cursor:zoom-in;position:relative}
+.mosaic img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
+.mosaic button:hover img{transform:scale(1.05)}
+.mosaic .tall{grid-row:span 2}
+.mosaic .wide{grid-column:span 2}
+.mosaic .full{grid-column:1/-1}
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.lb.open{display:flex}
+.lb img{max-height:90vh;max-width:94vw;border-radius:8px}
+.lb button{position:absolute;top:14px;right:18px;background:#000a;color:#fff;border:1px solid #666;border-radius:50%;width:44px;height:44px;font-size:1.3rem;cursor:pointer}
+
+/* qr */
+.qr{display:grid;grid-template-columns:auto 1fr;gap:32px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:28px;margin-top:26px}
+#qrbox{background:#fff;padding:14px;border-radius:10px;width:190px;height:190px;display:grid;place-items:center}
+#qrbox svg{width:100%;height:100%}
+.qr label{display:block;color:var(--muted);font-size:.85rem;margin-bottom:4px}
+.qr input{width:100%;background:#0e0e0e;color:var(--text);border:1px solid #444;border-radius:6px;padding:10px 12px;font:inherit;font-size:.95rem}
+.qr .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+footer{padding:30px 0;border-top:1px solid var(--line);color:var(--muted);text-align:center;font-size:.9rem}
+
+@media (max-width:860px){
+  section{padding:52px 0}
+  .hero .wrap{grid-template-columns:1fr;min-height:0}
+  .hero-copy{padding:44px 0 0}
+  .hero-img{order:2;margin-top:10px}
+  .hero-img img{width:min(190px,50%)}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .panels[data-view="both"]{grid-template-columns:1fr}
+  .cmp{grid-template-columns:1fr}
+  .mosaic{grid-template-columns:repeat(2,1fr);grid-auto-rows:150px}
+  .mosaic .wide{grid-column:span 2}
+  .qr{grid-template-columns:1fr;justify-items:center;text-align:left}
+  .qr>div:last-child{width:100%}
+  .panel{padding:18px}
+  .nav nav a{padding:8px 9px;font-size:.9rem}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="logo" href="#top"><i></i>TOTO</a>
+    <nav aria-label="เมนู">
+      <a href="#gpa">กราฟเกรด</a>
+      <a href="#about">แนะนำตัว</a>
+      <a href="#gallery">แกลเลอรี</a>
+      <a href="#qr">QR</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-copy">
+      <div class="eyebrow">Student Profile · ม.6</div>
+      <h1>สวัสดีครับ<br>ผม<span>โตโต้</span></h1>
+      <p>นายสรวิชญ์ ผดุงพล — คนพูดมาก ขี้เล่น และไม่ค่อยรู้จักคำว่าพูดพอ</p>
+      <div class="cta">
+        <a class="btn" href="#gpa">ดูกราฟเกรดเฉลี่ย ▸</a>
+        <a class="btn ghost" href="#about">อ่านแนะนำตัว</a>
+      </div>
+    </div>
+    <div class="hero-img">
+      <img src="assets/hero-cutout-2.png" alt="โตโต้ ในชุดสูทสีดำ ถือถ้วยรางวัล" width="256" height="506" fetchpriority="high">
+      <span class="tag">TOTO · ม.6</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ งานส่งครู 1: กราฟ GPA ============ -->
+<section id="gpa">
+  <div class="wrap">
+    <div class="eyebrow">ผลการเรียน</div>
+    <h2>เกรดเฉลี่ย (GPA) 5 ภาคเรียน</h2>
+    <p class="lead">กราฟเส้นแบบโต้ตอบได้ — แตะหรือเอาเมาส์ชี้ที่จุดเพื่อดูรายละเอียดแต่ละเทอม ใช้ปุ่มลูกศรซ้าย/ขวาเลื่อนดูได้</p>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="chart-card">
+      <svg id="chart" role="img" aria-label="กราฟเส้นเกรดเฉลี่ยตั้งแต่ ม.4 เทอม 1 ถึง ม.6 เทอม 1"></svg>
+      <div class="detail" id="detail" aria-live="polite"></div>
+      <p class="hint">แกนตั้ง = เกรดเฉลี่ย (GPA, เต็ม 4.00) · แกนนอน = ภาคเรียน</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ งานส่งครู 2: แนะนำตัว ============ -->
+<section id="about">
+  <div class="wrap">
+    <div class="eyebrow">แนะนำตัว</div>
+    <h2>เวอร์ชันที่ผมเขียนเอง vs. เวอร์ชันที่ AI ปรับให้</h2>
+    <p class="lead">เวอร์ชันแรกผมเขียนเอง ส่วนเวอร์ชันที่สอง AI ช่วยปรับสำนวน — ข้อความที่ไฮไลท์สีเขียวคือจุดที่ AI แก้หรือเพิ่มเข้ามา</p>
+
+    <div class="tabs" role="tablist" aria-label="เลือกเวอร์ชัน">
+      <button class="tab" role="tab" aria-selected="false" data-view="orig">ผมเขียนเอง</button>
+      <button class="tab" role="tab" aria-selected="true" data-view="ai">AI ปรับ (ไฮไลท์)</button>
+      <button class="tab" role="tab" aria-selected="false" data-view="both">เทียบข้างกัน</button>
+    </div>
+
+    <div class="panels" id="panels" data-view="ai">
+      <article class="panel p-orig">
+        <h3>ก่อนปรับ <span class="chip">เขียนโดยโตโต้</span></h3>
+        <p>สวัสดีครับ ผมชื่อ นายสรวิชญ์ ผดุงพล ชื่อเล่น โตโต้ เป็นคนเฮฮา พูดมาก และค่อนข้างชอบสร้างความวุ่นวายให้กับคนรอบข้าง ถ้าอยู่กับเพื่อนแล้วไม่ค่อยมีช่วงเวลาเงียบ ๆ เท่าไหร่ เพราะมักจะหาเรื่องมาพูดได้ตลอด ไม่ว่าจะเป็นเรื่องมีสาระ ไม่มีสาระ หรือเรื่องที่ไม่มีใครถามก็ตาม</p>
+        <p>นิสัยส่วนตัวเป็นคนชอบตีมึน บางเรื่องก็เข้าใจนะ แต่ขอทำเป็นไม่เข้าใจไว้ก่อน บางครั้งก็ชอบกวนประสาทคนอื่นโดยไม่รู้ตัว หรือบางทีก็รู้ตัวนั่นแหละแต่ยังทำอยู่ เป็นคนชอบเล่นมุก แม้ว่ามุกส่วนใหญ่จะไม่ได้ตลกอย่างที่คิด และมีโอกาสสูงมากที่คนรอบข้างจะเงียบใส่แทนที่จะหัวเราะ</p>
+        <p>ถ้าพูดถึงเรื่องการเรียน ผมก็เป็นนักเรียนธรรมดาคนหนึ่งที่มีทั้งช่วงขยันและช่วงที่อยากถามตัวเองว่าเปิดหนังสือไปทำไมเหมือนกัน ผลการเรียนที่ผ่านมาในแต่ละเทอมก็มีขึ้นมีลงบ้าง ตั้งแต่ ม.4 เทอม 1 ได้ 3.48 เทอม 2 ได้ 3.28 พอขึ้น ม.5 เทอม 1 ได้ 3.60 เทอม 2 ได้ 3.65 และ ม.6 เทอม 1 ได้ 3.71 ซึ่งก็เป็นตัวเลขที่ผ่านเข้ามาในชีวิตนักเรียนแต่ละช่วง ไม่ได้หมายความว่าผมขยันหรือเข้าใจทุกวิชาเสมอไป เพราะบางวิชาก็เรียนรู้เรื่อง บางวิชาก็เหมือนกำลังนั่งฟังภาษาต่างดาวอยู่เหมือนกัน</p>
+        <p>ผมเองก็มีนิสัยที่ไม่ได้ดีไปหมดทุกอย่าง บางครั้งก็ขี้เกียจ ผัดวันประกันพรุ่ง ชอบคิดอะไรไว้เยอะ แต่พอถึงเวลาทำจริงกลับมีอาการสมองหยุดทำงานเป็นพัก ๆ บางทีก็จริงจังกับเรื่องเล็ก ๆ น้อย ๆ มากเกินไป แต่กลับมองข้ามเรื่องที่ควรจะใส่ใจ หรือบางครั้งก็พูดอะไรออกไปก่อนแล้วค่อยกลับมาคิดทีหลังว่าเมื่อกี้พูดอะไรไปวะ</p>
+        <p>นอกจากนี้ยังเป็นคนที่ชอบแซวเพื่อน ชอบแกล้งคน และบางครั้งก็เล่นไม่รู้เวลา อาจมีช่วงที่พูดมากจนคนอื่นรำคาญ หรือทำตัวเหมือนไม่ค่อยสนใจอะไร ทั้งที่จริง ๆ ก็ไม่ได้ตั้งใจจะเมินใคร เพียงแค่บางทีผมก็ไม่รู้ว่าจะต้องแสดงออกยังไงให้เหมาะสมเท่านั้นเอง</p>
+        <p>ถึงจะเป็นคนชอบเล่น แต่ก็ไม่ได้หมายความว่าจะจริงจังไม่ได้ เพียงแต่ผมไม่ค่อยชอบทำตัวเคร่งเครียดตลอดเวลา ชีวิตนักเรียนก็มีทั้งเรื่องที่ต้องรับผิดชอบ เรื่องที่ผิดพลาด เรื่องที่น่าอาย และเรื่องที่กลับมานึกถึงทีไรก็ยังขำตัวเองอยู่ดี</p>
+        <p>สุดท้ายแล้วผมก็คงเป็นแค่โตโต้คนหนึ่งที่พูดมากไปหน่อย กวนประสาทไปบ้าง ขี้เกียจในบางเวลา และไม่ได้เป็นคนสมบูรณ์แบบอะไร แต่ถ้าถามว่ามีอะไรรับประกันได้บ้าง ก็คงเป็นเรื่องที่ว่าถ้าได้อยู่ด้วยกันนาน ๆ คุณอาจจะได้ยินเสียงผมบ่อยกว่าที่คิดก็ได้ครับ 555</p>
+      </article>
+
+      <article class="panel p-ai">
+        <h3>หลังปรับ <span class="chip ai">AI ปรับให้ · ไฮไลท์ = จุดที่แก้</span></h3>
+        <p>สวัสดีครับ ผมชื่อ นายสรวิชญ์ ผดุงพล ชื่อเล่น โตโต้ เป็นคนที่พูดมากพอสมควร <mark>หรือจะเรียกว่ามากเกินความจำเป็นก็ได้ บางครั้งพูดจนตัวเองยังสงสัยว่าตกลงเมื่อกี้กำลังพูดเรื่องอะไรอยู่</mark> เป็นคนชอบหาเรื่องคุย ชอบแทรก ชอบแซว และชอบพูดอะไรเรื่อยเปื่อย แม้บางครั้งจะไม่มีใครอยากฟังก็ตาม</p>
+        <p>เป็นคนเฮฮา ชอบเล่น ชอบกวนประสาท และ<mark>มีความสามารถพิเศษในการทำให้บทสนทนาที่กำลังจริงจังกลายเป็นเรื่องไร้สาระได้ภายในไม่กี่วินาที</mark> ชอบตีมึน ทำเหมือนไม่รู้เรื่อง ทั้งที่บางทีก็รู้ <mark>แต่บางทีก็ไม่รู้จริง ๆ แยกไม่ค่อยออกเหมือนกัน</mark></p>
+        <p>นิสัยอีกอย่างคือเป็นคนขี้เกียจในบางเรื่อง ชอบผัดวันประกันพรุ่ง บอกตัวเองว่าเดี๋ยวค่อยทำ <mark>แต่คำว่าเดี๋ยวของผมบางทีก็ไม่รู้ว่าหมายถึงวันไหน ชอบคิดว่าตัวเองมีแผนการทุกอย่าง แต่พอถึงเวลาจริงก็อาจจะนั่งงงอยู่หน้าจอเฉย ๆ</mark></p>
+        <p>ส่วนเรื่องการเรียนก็มีตัวเลขให้จดจำอยู่บ้าง ม.4 เทอม 1 ได้ 3.48 เทอม 2 ได้ 3.28 ม.5 เทอม 1 ได้ 3.60 เทอม 2 ได้ 3.65 และ ม.6 เทอม 1 ได้ 3.71 <mark>เรียกได้ว่าเกรดก็มีการเดินทางของมัน ส่วนตัวผมก็เดินทางไปพร้อมกับความง่วงและความขี้เกียจเช่นกัน</mark></p>
+        <p>เป็นคนที่บางครั้งก็พูดไม่คิด คิดไม่ทัน <mark>ปากไวกว่าอินเทอร์เน็ตบ้านตัวเองเสียอีก</mark> ชอบแซวคนอื่น <mark>แต่พอโดนแซวกลับก็อาจจะมีอาการเงียบไปสามวินาที ก่อนจะหาคำพูดมาเถียงต่อ</mark> เป็นคนที่ชอบหัวเราะกับเรื่องเล็ก ๆ น้อย ๆ และบางทีก็ขำอยู่คนเดียวจนคนอื่นคิดว่ามีอะไรผิดปกติ</p>
+        <p>นอกจากนี้ยังเป็นคนที่ชอบทำตัวเหมือนมีเรื่องให้พูดตลอดเวลา เจออะไรก็เล่า เห็นอะไรก็ทัก นึกอะไรออกก็พูด <mark>บางเรื่องเล่าไปสามรอบก็ยังเล่าได้อีกรอบ เพราะดูเหมือนความจำจะเลือกได้ว่าจะจำอะไร แต่ความสามารถในการพูดนั้นไม่มีวันหมด</mark></p>
+        <p>ถ้าจะให้สรุปตัวเองสั้น ๆ ก็คงเป็นคนพูดมาก ขี้เล่น ขี้แกล้ง ขี้เกียจ ตีมึน ชอบเถียง ชอบแซว <mark>บางทีก็ไร้สาระจนไม่รู้จะสรรหาคำไหนมาอธิบาย และที่สำคัญคือเป็นคนที่ไม่ค่อยรู้จักคำว่าพูดพอ</mark>ครับ</p>
+        <p><mark>ยินดีที่ได้รู้จักครับ ผมโตโต้ คนที่อาจจะไม่ได้มีอะไรน่าสนใจมากนัก แต่ถ้าอยากได้ยินเสียงคนพูดไม่หยุด ผมพร้อมให้บริการตลอด 24 ชั่วโมง (ยกเว้นตอนหลับ)</mark> 555</p>
+      </article>
+    </div>
+
+    <p class="legend">▮ ไฮไลท์สีเขียว = ข้อความที่ AI แก้หรือเพิ่ม · ย่อหน้าเรื่องความจริงจัง/ข้อคิด และย่อหน้า "ไม่สมบูรณ์แบบ" ถูกตัดออกทั้งหมดในเวอร์ชัน AI</p>
+
+    <div class="note"><b>ข้อสังเกตต่อเวอร์ชัน AI:</b> บุคลิกชัดกว่า แต่มีบางประโยคที่ตั้งใจแต่งมุกมากไปนิด เช่น "ปากไวกว่าอินเทอร์เน็ตบ้านตัวเอง" และ "บริการ 24 ชั่วโมง" อาจปรับให้เป็นภาษาพูดธรรมดากว่านี้ได้อีก เป้าหมายคือไม่ต้องทำให้โตโต้ดูดี ไม่ต้องทำให้ดูแย่เป็นพิเศษ แค่เล่าว่าเป็นคนแบบไหนก็พอ</div>
+
+    <div class="changes">
+      <h3>ปรับตรงไหนบ้าง (ทีละจุด)</h3>
+
+      <details>
+        <summary>จุดที่ 1 — การแนะนำตัว</summary>
+        <div class="cmp">
+          <div><small>ก่อน</small>เป็นคนเฮฮา พูดมาก และค่อนข้างชอบสร้างความวุ่นวาย</div>
+          <div class="a"><small>หลัง</small>เป็นคนที่พูดมากพอสมควร หรือจะเรียกว่ามากเกินความจำเป็นก็ได้</div>
+        </div>
+        <p class="why">ปรับ: เปลี่ยนจากการบอกนิสัยทั่วไปให้กลายเป็นการแซวตัวเองตั้งแต่ประโยคแรก</p>
+      </details>
+      <details>
+        <summary>จุดที่ 2 — ความตีมึน</summary>
+        <div class="cmp">
+          <div><small>ก่อน</small>บางเรื่องก็เข้าใจนะ แต่ขอทำเป็นไม่เข้าใจไว้ก่อน</div>
+          <div class="a"><small>หลัง</small>ทั้งที่บางทีก็รู้ แต่บางทีก็ไม่รู้จริง ๆ แยกไม่ค่อยออกเหมือนกัน</div>
+        </div>
+        <p class="why">ปรับ: เพิ่มความกวนและความไม่แน่ใจในตัวเอง</p>
+      </details>
+      <details>
+        <summary>จุดที่ 3 — ผลการเรียน</summary>
+        <div class="cmp">
+          <div><small>ก่อน</small>ไม่ได้หมายความว่าผมขยันหรือเข้าใจทุกวิชาเสมอไป</div>
+          <div class="a"><small>หลัง</small>เกรดก็มีการเดินทางของมัน ส่วนตัวผมก็เดินทางไปพร้อมกับความง่วงและความขี้เกียจเช่นกัน</div>
+        </div>
+        <p class="why">ปรับ: ตัดการอธิบายแก้ตัวเรื่องผลการเรียนออก เปลี่ยนเป็นมุกแซวตัวเอง</p>
+      </details>
+      <details>
+        <summary>จุดที่ 4 — ความขี้เกียจ</summary>
+        <div class="cmp">
+          <div><small>ก่อน</small>ชอบคิดอะไรไว้เยอะ แต่พอถึงเวลาทำจริงกลับมีอาการสมองหยุดทำงาน</div>
+          <div class="a"><small>หลัง</small>ชอบคิดว่าตัวเองมีแผนการทุกอย่าง แต่พอถึงเวลาจริงก็อาจจะนั่งงงอยู่หน้าจอเฉย ๆ</div>
+        </div>
+        <p class="why">ปรับ: เพิ่มภาพพฤติกรรมให้เห็นชัดขึ้นและเป็นธรรมชาติมากขึ้น</p>
+      </details>
+      <details>
+        <summary>จุดที่ 5 — การพูดมาก</summary>
+        <div class="cmp">
+          <div><small>ก่อน</small>พูดอะไรออกไปก่อนแล้วค่อยกลับมาคิดทีหลัง</div>
+          <div class="a"><small>หลัง</small>ปากไวกว่าอินเทอร์เน็ตบ้านตัวเองเสียอีก</div>
+        </div>
+        <p class="why">ปรับ: เปลี่ยนเป็นมุกเปรียบเทียบที่มีความเป็นกันเอง</p>
+      </details>
+      <details>
+        <summary>จุดที่ 6 — การปิดท้าย</summary>
+        <div class="cmp">
+          <div><small>ก่อน</small>พูดถึงการเป็นคนไม่สมบูรณ์แบบและการอยู่ร่วมกับคนอื่น</div>
+          <div class="a"><small>หลัง</small>พร้อมให้บริการตลอด 24 ชั่วโมง (ยกเว้นตอนหลับ)</div>
+        </div>
+        <p class="why">ปรับ: ตัดการสรุปเชิงข้อคิดออกทั้งหมด และจบด้วยมุกที่สะท้อนบุคลิก</p>
+      </details>
+
+      <h3 style="margin-top:28px">สรุปภาพรวมการปรับ</h3>
+      <ul class="sum">
+        <li>ลดการอธิบายตัวเองในเชิงแก้ตัว</li>
+        <li>ตัดประโยคที่พยายามทำให้ตัวเองดูเป็นคนดี</li>
+        <li>เพิ่มการแซวตัวเองและมุกประชดเล็ก ๆ</li>
+        <li>เปลี่ยนการบอกนิสัยให้เป็นการเล่าพฤติกรรม</li>
+        <li>ตัดบทสรุปชีวิตและข้อคิดออก</li>
+        <li>ทำให้ภาษาดูเหมือนคนกำลังเล่าเรื่องตัวเองจริง ๆ มากกว่ากำลังเขียนเรียงความ</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ แกลเลอรี ============ -->
+<section id="gallery">
+  <div class="wrap">
+    <div class="eyebrow">Gallery</div>
+    <h2>ภาพบางส่วนของโตโต้</h2>
+    <p class="lead">แตะที่รูปเพื่อดูภาพใหญ่</p>
+    <div class="mosaic">
+      <button class="tall" data-full="assets/portrait.jpg"><img loading="lazy" src="assets/portrait.jpg" alt="โตโต้ในชุดสูทสีดำ ยิ้มหน้ากล้อง"></button>
+      <button class="wide" data-full="assets/team.jpg"><img loading="lazy" src="assets/team.jpg" alt="โตโต้กับเพื่อนในชุดไทยที่บูธ"></button>
+      <button class="tall" data-full="assets/gz-point.jpg"><img loading="lazy" src="assets/gz-point.jpg" alt="โตโต้ชี้ไปที่ต้นไม้ในสวน"></button>
+      <button data-full="assets/gz-statue.jpg"><img loading="lazy" src="assets/gz-statue.jpg" alt="โตโต้ยืนดูรูปปั้นริมถนนที่กว่างโจว"></button>
+      <button data-full="assets/nrct.jpg"><img loading="lazy" src="assets/nrct.jpg" alt="โตโต้กับทีมและผู้มอบรางวัลบนเวที"></button>
+      <button class="full" data-full="assets/stage.jpg"><img loading="lazy" src="assets/stage.jpg" alt="โตโต้กับเพื่อนรับรางวัลบนเวที" style="object-position:50% 82%"></button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QR ============ -->
+<section id="qr">
+  <div class="wrap">
+    <div class="eyebrow">Share</div>
+    <h2>สแกนเพื่อเปิดเว็บนี้</h2>
+    <div class="qr">
+      <div id="qrbox" aria-label="QR Code ของเว็บนี้"></div>
+      <div>
+        <p style="margin:0 0 14px;color:var(--muted)">QR สร้างจากลิงก์ด้านล่างอัตโนมัติ (ค่าเริ่มต้นคือลิงก์ของหน้านี้) ถ้าใช้โดเมนอื่นให้แก้ลิงก์แล้ว QR จะเปลี่ยนตาม</p>
+        <label for="qrurl">ลิงก์เว็บ</label>
+        <input id="qrurl" type="url" inputmode="url" autocomplete="off">
+        <div class="row">
+          <button class="btn" id="qrdl" type="button">ดาวน์โหลด QR (PNG)</button>
+          <button class="btn ghost" id="qrcopy" type="button">คัดลอกลิงก์</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>© <span id="yr"></span> สรวิชญ์ ผดุงพล (โตโต้) · ทำเว็บโดยโตโต้ กับ AI ช่วยนิดหน่อย</footer>
+
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="ดูรูปใหญ่"><button type="button" aria-label="ปิด">✕</button><img alt=""></div>
+
+<script src="assets/qrcode.js"></script>
+<script>
+/* ---------- GPA chart ---------- */
+(function(){
+  var data=[
+    {y:"ม.4",t:"เทอม 1",v:3.48},{y:"ม.4",t:"เทอม 2",v:3.28},
+    {y:"ม.5",t:"เทอม 1",v:3.60},{y:"ม.5",t:"เทอม 2",v:3.65},
+    {y:"ม.6",t:"เทอม 1",v:3.71}
+  ];
+  var svg=document.getElementById("chart"),detail=document.getElementById("detail"),NS="http://www.w3.org/2000/svg";
+  var sel=data.length-1,first=true;
+  function el(n,a,p){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+  function f(v){return v.toFixed(2)}
+
+  // stat tiles
+  var vals=data.map(function(d){return d.v}),mx=Math.max.apply(0,vals),mn=Math.min.apply(0,vals);
+  var avg=vals.reduce(function(a,b){return a+b},0)/vals.length;
+  var st=[[f(vals[vals.length-1]),"เทอมล่าสุด (ม.6/1)"],[f(mn),"ต่ำสุด (ม.4/2)"],[f(avg),"เฉลี่ย 5 เทอม"],["+"+f(vals[vals.length-1]-mn),"เพิ่มจากเทอมต่ำสุด ("+f(mn)+")"]];
+  document.getElementById("stats").innerHTML=st.map(function(s){return '<div class="stat"><b>'+s[0]+'</b><span>'+s[1]+'</span></div>'}).join("");
+
+  function showDetail(i){
+    var d=data[i],p=data[i-1],h='<b>'+f(d.v)+'</b><span>'+d.y+' '+d.t+'</span>';
+    if(p){var df=d.v-p.v;h+='<span class="d '+(df>=0?'up':'down')+'">'+(df>=0?'▲ ':'▼ ')+(df>=0?'+':'')+f(df)+' จาก '+p.y+' '+p.t+'</span>'}
+    else h+='<span class="d">เทอมแรกของช่วงที่แสดง</span>';
+    detail.innerHTML=h;
+  }
+
+  function draw(){
+    var W=svg.parentNode.clientWidth-28; if(W<260)W=260;
+    var small=W<560,H=small?370:440;
+    var m={l:small?58:74,r:small?20:36,t:small?34:40,b:small?100:84};
+    var iw=W-m.l-m.r,ih=H-m.t-m.b,y0=3.0,y1=4.0;
+    svg.setAttribute("viewBox","0 0 "+W+" "+H);svg.setAttribute("height",H);
+    svg.innerHTML="";
+    var X=function(i){return m.l+iw*(i+.5)/data.length},Y=function(v){return m.t+ih*(1-(v-y0)/(y1-y0))};
+    var defs=el("defs",{},svg),g=el("linearGradient",{id:"ag",x1:0,y1:0,x2:0,y2:1},defs);
+    el("stop",{offset:"0","stop-color":"#76b900","stop-opacity":".35"},g);el("stop",{offset:"1","stop-color":"#76b900","stop-opacity":"0"},g);
+
+    // year bands (ม.4 / ม.5 / ม.6)
+    [[0,2,"ม.4"],[2,4,"ม.5"],[4,5,"ม.6"]].forEach(function(b,k){
+      var x=m.l+iw*b[0]/data.length,w=iw*(b[1]-b[0])/data.length;
+      if(k%2===0)el("rect",{x:x,y:m.t,width:w,height:ih,class:"band"},svg);
+      var t=el("text",{x:x+w/2,y:m.t+ih+(small?60:66),"text-anchor":"middle",class:"band-t"},svg);t.textContent="ชั้น "+b[2];
+    });
+    // grid + y ticks
+    for(var v=y0;v<=y1+.001;v+=.25){
+      var y=Y(v);el("line",{x1:m.l,x2:m.l+iw,y1:y,y2:y,class:"grid"},svg);
+      var t=el("text",{x:m.l-10,y:y+4,"text-anchor":"end",class:"tick"},svg);t.textContent=v.toFixed(2);
+    }
+    // axis titles
+    var yt=el("text",{transform:"translate(16,"+(m.t+ih/2)+") rotate(-90)","text-anchor":"middle",class:"ax-title"},svg);yt.textContent="เกรดเฉลี่ย (GPA)";
+    var xt=el("text",{x:m.l+iw/2,y:H-6,"text-anchor":"middle",class:"ax-title"},svg);xt.textContent="ภาคเรียน";
+    // x labels
+    data.forEach(function(d,i){
+      var t=el("text",{x:X(i),y:m.t+ih+22,"text-anchor":"middle",class:"xlab"},svg);
+      var a=el("tspan",{x:X(i)},t);a.textContent=d.y;
+      var b=el("tspan",{x:X(i),dy:"1.25em"},t);b.textContent=d.t;
+    });
+    // area + line
+    var pts=data.map(function(d,i){return X(i)+","+Y(d.v)}).join(" ");
+    el("polygon",{points:X(0)+","+(m.t+ih)+" "+pts+" "+X(data.length-1)+","+(m.t+ih),class:"area"},svg);
+    var line=el("polyline",{points:pts,class:"line"},svg);
+    if(first&&!matchMedia("(prefers-reduced-motion:reduce)").matches){
+      var L=line.getTotalLength?line.getTotalLength():0;
+      if(L){line.style.strokeDasharray=L;line.style.strokeDashoffset=L;line.getBoundingClientRect();
+        line.style.transition="stroke-dashoffset 1.3s ease";line.style.strokeDashoffset=0;}
+    }
+    first=false;
+    // marker line
+    var hl=el("line",{x1:X(sel),x2:X(sel),y1:m.t,y2:m.t+ih,class:"hl"},svg);
+    // points + value labels
+    data.forEach(function(d,i){
+      var up=i===0||data[i-1].v<=d.v||i===data.length-1; // label above unless local dip
+      var below=i>0&&i<data.length-1&&d.v<data[i-1].v&&d.v<data[i+1].v;
+      var vt=el("text",{x:X(i),y:Y(d.v)+(below?28:-16),"text-anchor":"middle",class:"val"},svg);vt.textContent=f(d.v);
+      var c=el("circle",{cx:X(i),cy:Y(d.v),r:i===sel?9:7,class:"pt"+(i===sel?" on":""),tabindex:0,role:"button","aria-label":d.y+" "+d.t+" เกรด "+f(d.v)},svg);
+      var act=function(){sel=i;showDetail(i);hl.setAttribute("x1",X(i));hl.setAttribute("x2",X(i));
+        svg.querySelectorAll(".pt").forEach(function(n,k){n.setAttribute("r",k===i?9:7);n.classList.toggle("on",k===i)})};
+      c.addEventListener("mouseenter",act);c.addEventListener("focus",act);c.addEventListener("click",act);
+      c.addEventListener("keydown",function(e){
+        var n=e.key==="ArrowRight"?i+1:e.key==="ArrowLeft"?i-1:-1;
+        if(n>=0&&n<data.length){e.preventDefault();svg.querySelectorAll(".pt")[n].focus()}
+      });
+      // wider invisible hit area for touch
+      var h=el("circle",{cx:X(i),cy:Y(d.v),r:22,fill:"transparent",style:"cursor:pointer"},svg);
+      h.addEventListener("mouseenter",act);h.addEventListener("click",act);
+    });
+    showDetail(sel);
+  }
+  draw();
+  var rt;new ResizeObserver(function(){clearTimeout(rt);rt=setTimeout(draw,80)}).observe(svg.parentNode);
+})();
+
+/* ---------- tabs ---------- */
+(function(){
+  var tabs=document.querySelectorAll(".tab"),panels=document.getElementById("panels");
+  tabs.forEach(function(t){t.addEventListener("click",function(){
+    panels.dataset.view=t.dataset.view;
+    tabs.forEach(function(x){x.setAttribute("aria-selected",x===t)});
+  })});
+})();
+
+/* ---------- lightbox ---------- */
+(function(){
+  var lb=document.getElementById("lb"),im=lb.querySelector("img");
+  document.querySelectorAll(".mosaic button").forEach(function(b){b.addEventListener("click",function(){
+    im.src=b.dataset.full;im.alt=b.querySelector("img").alt;lb.classList.add("open");lb.querySelector("button").focus()})});
+  function close(){lb.classList.remove("open")}
+  lb.addEventListener("click",close);document.addEventListener("keydown",function(e){if(e.key==="Escape")close()});
+})();
+
+/* ---------- QR ---------- */
+(function(){
+  var box=document.getElementById("qrbox"),inp=document.getElementById("qrurl");
+  var url=location.protocol.indexOf("http")===0?location.href.split("#")[0]:"https://example.com/";
+  inp.value=url;
+  function make(){
+    var u=inp.value.trim()||url;
+    try{var q=qrcode(0,"M");q.addData(u);q.make();box.innerHTML=q.createSvgTag({cellSize:4,margin:0,scalable:true});}
+    catch(e){box.textContent="ลิงก์ยาวเกินไป"}
+  }
+  inp.addEventListener("input",make);make();
+  document.getElementById("qrdl").addEventListener("click",function(){
+    var s=box.querySelector("svg");if(!s)return;
+    var img=new Image(),xml=new XMLSerializer().serializeToString(s);
+    img.onload=function(){var c=document.createElement("canvas"),n=1024,pad=64;c.width=c.height=n;var x=c.getContext("2d");
+      x.fillStyle="#fff";x.fillRect(0,0,n,n);x.imageSmoothingEnabled=false;x.drawImage(img,pad,pad,n-2*pad,n-2*pad);
+      var a=document.createElement("a");a.download="toto-qr.png";a.href=c.toDataURL("image/png");a.click()};
+    img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(xml);
+  });
+  document.getElementById("qrcopy").addEventListener("click",function(){
+    var b=this;(navigator.clipboard?navigator.clipboard.writeText(inp.value):Promise.reject()).then(function(){b.textContent="คัดลอกแล้ว ✓"},function(){inp.select()});
+  });
+  document.getElementById("yr").textContent=new Date().getFullYear()+543;
+})();
+</script>
+</body>
+</html>
