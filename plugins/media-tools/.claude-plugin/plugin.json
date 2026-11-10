@@ -1,0 +1,1 @@
+{ "name": "media-tools", "version": "0.1.0", "description": "Checks and installs FFmpeg, Whisper and Hyperframes; adds /media-tools" }

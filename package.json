@@ -1,0 +1,23 @@
+{
+  "name": "ytoyo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sorawittoto14-sketch/ytoyo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sorawittoto14-sketch/ytoyo/issues"
+  },
+  "homepage": "https://github.com/sorawittoto14-sketch/ytoyo#readme",
+  "dependencies": {
+    "hyperframes": "^0.9.30"
+  }
+}
