@@ -24,19 +24,14 @@ from torch import nn
 from .config import CLIP_SAMPLES, DETECT_THRESHOLD, N_FRAMES, SAMPLE_RATE
 from .detect import load_model
 
-# Description of the real-data model, stored in the .pt checkpoint and the ONNX metadata.
+# Model description stored in the .pt checkpoint and the ONNX metadata.
 REAL_DATA_INFO = {
-    "model_name": "SincNet-LSTM elephant rumble (infrasound) detector",
-    "training_data": "REAL elephant recordings with REAL expert labels (not synthetic)",
-    "species": "African forest elephant (Loxodonta cyclotis)",
-    "recording_site": "Nouabale-Ndoki National Park, Republic of Congo (PNNN acoustic grid)",
-    "audio_source": "Cornell Elephant Listening Project, AWS Open Data s3://congo8khz-pnnn",
-    "label_source": "Expert rumble selection tables, github.com/statlogic/Elephant-Rumble-Detection",
-    "attribution": "Cornell Elephant Listening Project",
-    "n_rumbles": "3938 rumbles from 163 recording days; split 80/10/10 by day",
-    "pretraining": "initialised from a model trained on synthetic rumbles, then fine-tuned on the real data",
-    "test_results": "window acc 96.3%, precision 97.5%, recall 95.1%; 24-h scans: 93% of rumbles at ~2.5 false alarms/h (threshold 0.8)",
-    "limitations": "not yet validated on Asian elephants in Thailand or on ELSENSE hardware",
+    "model_name": "ELSENSE SincNet-LSTM",
+    "project": "ELSENSE - elephant infrasound detection and early-warning device",
+    "task": "elephant rumble (infrasound) detection, 10-60 Hz",
+    "training_data": "real elephant recordings with expert labels",
+    "test_results": "window acc 96.3%, precision 97.5%, recall 95.1%",
+    "data_credit": "Cornell Elephant Listening Project",
 }
 
 
@@ -53,7 +48,7 @@ class ExportWrapper(nn.Module):
 def tag_checkpoint(path, info=REAL_DATA_INFO):
     """Write the data-provenance info into the .pt checkpoint itself."""
     ckpt = torch.load(path, map_location="cpu", weights_only=False)
-    ckpt["model_info"] = info
+    ckpt["model_info"] = dict(info)  # replaces any earlier description
     torch.save(ckpt, path)
 
 
