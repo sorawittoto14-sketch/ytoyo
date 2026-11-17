@@ -14,13 +14,13 @@ in the infrasound band and make the task non-trivial:
   * aircraft - harmonic stack with a slow Doppler sweep across the clip
   * thunder - impulsive low-frequency broadband burst
   * wind gusts - amplitude-modulated noise below ~20 Hz
-  * insects / birds - short tones above 150 Hz
+  * insects / birds - short tones above the infrasound band (70-120 Hz)
 """
 
 import numpy as np
 from scipy import signal
 
-from .config import CLIP_SAMPLES, RUMBLE_SECONDS, SAMPLE_RATE, SNR_BAND
+from .config import CLIP_SAMPLES, MIN_RUMBLE_IN_WINDOW, RUMBLE_SECONDS, SAMPLE_RATE, SNR_BAND
 
 SR = SAMPLE_RATE
 
@@ -96,7 +96,7 @@ def _thunder(rng, n):
     start = rng.integers(0, n - SR // 2)
     length = min(n - start, int(rng.uniform(0.5, 3.0) * SR))
     burst = rng.normal(size=length) * np.exp(-np.linspace(0, rng.uniform(2, 6), length))
-    sos = signal.butter(2, rng.uniform(40, 150), btype="lowpass", fs=SR, output="sos")
+    sos = signal.butter(2, rng.uniform(30, 100), btype="lowpass", fs=SR, output="sos")
     x[start:start + length] = signal.sosfilt(sos, burst)
     return x
 
@@ -112,7 +112,7 @@ def _insects(rng, n):
     for _ in range(rng.integers(1, 6)):
         length = int(rng.uniform(0.1, 1.0) * SR)
         start = rng.integers(0, n - length)
-        f = rng.uniform(150, 240)
+        f = rng.uniform(70, 120)
         tt = np.arange(length) / SR
         x[start:start + length] += np.sin(2 * np.pi * f * tt) * np.hanning(length)
     return x
@@ -147,9 +147,8 @@ def make_clip(rng, positive: bool, snr_db_range=(-6.0, 12.0)) -> tuple[np.ndarra
     meta = {"label": int(positive), "distractors": used, "snr_db": None, "segments": []}
     if positive:
         r = rumble(rng)
-        r = r[: CLIP_SAMPLES]
-        # at least 1 s (or the whole rumble) must lie inside the clip
-        min_in = min(len(r), int(1.0 * SR))
+        # at least MIN_RUMBLE_IN_WINDOW s (or the whole rumble) must lie inside the window
+        min_in = min(len(r), int(MIN_RUMBLE_IN_WINDOW * SR))
         start = rng.integers(-(len(r) - min_in), CLIP_SAMPLES - min_in + 1)
         snr = rng.uniform(*snr_db_range)
         r = r * np.sqrt(10 ** (snr / 10) / _band_power(r))  # background band power == 1

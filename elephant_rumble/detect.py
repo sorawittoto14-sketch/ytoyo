@@ -3,9 +3,9 @@
     python -m elephant_rumble.detect recording.wav [more.wav ...] \
         --model models/sinc_lstm.pt --out-dir detections/
 
-The file is streamed in blocks and scanned with overlapping 8-s windows
-(default hop 4 s). The SincNet+LSTM model outputs a rumble probability every
-50 ms; overlapping windows are averaged into one probability timeline, which
+The file is streamed in blocks and scanned with sliding windows
+(3-s windows, 1-s overlap). The SincNet+LSTM model outputs a rumble probability
+every 0.2 s; overlapping windows are averaged into one probability timeline, which
 is thresholded into events (begin/end at frame resolution). Each event is one
 row of a Raven Pro selection table (``<name>.rumbles.txt``).
 """
@@ -17,7 +17,7 @@ import numpy as np
 import soundfile as sf
 import torch
 
-from .config import CLIP_SAMPLES, FRAME_HOP, N_FRAMES, SAMPLE_RATE
+from .config import BAND_HZ, CLIP_SAMPLES, FRAME_HOP, HOP_SECONDS, N_FRAMES, SAMPLE_RATE
 from .features import fit_length, resample
 from .model import SincLSTM
 
@@ -37,7 +37,7 @@ def _frame_probs(model, windows: np.ndarray) -> np.ndarray:
     return torch.sigmoid(model(torch.from_numpy(windows.astype(np.float32)))).numpy()
 
 
-def frame_timeline(model, audio: np.ndarray, hop_s: float = 4.0, batch: int = 64) -> np.ndarray:
+def frame_timeline(model, audio: np.ndarray, hop_s: float = HOP_SECONDS, batch: int = 64) -> np.ndarray:
     """Per-frame rumble probability for audio already at SAMPLE_RATE."""
     hop = int(round(hop_s / FRAME_S)) * FRAME_HOP
     n_frames = int(np.ceil(len(audio) / FRAME_HOP))
@@ -56,20 +56,20 @@ def frame_timeline(model, audio: np.ndarray, hop_s: float = 4.0, batch: int = 64
     return (total / np.maximum(count, 1))[:n_frames]
 
 
-def score_file(model, path, hop_s: float = 4.0, block_minutes: float = 10.0) -> np.ndarray:
+def score_file(model, path, hop_s: float = HOP_SECONDS, block_minutes: float = 10.0) -> np.ndarray:
     """Frame timeline for a (possibly day-long) file, streamed in blocks.
 
     Blocks overlap by one window so frames near block edges get the same
     context as everywhere else; the overlap is cross-faded away."""
     info = sf.info(str(path))
     sr = info.samplerate
-    block_s = block_minutes * 60
+    block_s = np.ceil(block_minutes * 60 / hop_s) * hop_s  # whole number of hops
     margin_s = CLIP_SAMPLES / SAMPLE_RATE
     n_total = int(np.ceil(info.frames / sr * SAMPLE_RATE / FRAME_HOP))
     out = np.zeros(n_total)
     t = 0.0
     while t * sr < info.frames:
-        lo = max(0.0, t - margin_s)
+        lo = max(0.0, np.floor((t - margin_s) / hop_s) * hop_s)  # stay on the global window grid
         raw, _ = sf.read(str(path), start=int(lo * sr), frames=int((block_s + 2 * margin_s) * sr),
                          dtype="float32", always_2d=True)
         tl = frame_timeline(model, resample(raw[:, 0], sr), hop_s)
@@ -94,7 +94,7 @@ def timeline_to_events(probs, threshold, min_dur_s=0.5, max_gap_s=0.5):
     return [(a * FRAME_S, b * FRAME_S, float(probs[a:b].max())) for a, b in merged if (b - a) * FRAME_S >= min_dur_s]
 
 
-def write_raven(events, path, low_hz=5.0, high_hz=150.0):
+def write_raven(events, path, low_hz=BAND_HZ[0], high_hz=BAND_HZ[1]):
     cols = ["Selection", "View", "Channel", "Begin Time (s)", "End Time (s)", "Low Freq (Hz)", "High Freq (Hz)", "Score"]
     with open(path, "w") as f:
         f.write("\t".join(cols) + "\n")
@@ -107,7 +107,7 @@ def main(argv=None):
     ap.add_argument("audio", nargs="+")
     ap.add_argument("--model", default="models/sinc_lstm.pt")
     ap.add_argument("--threshold", type=float, help="default: value stored in the checkpoint")
-    ap.add_argument("--hop", type=float, default=4.0, help="window hop in seconds")
+    ap.add_argument("--hop", type=float, default=HOP_SECONDS, help="window hop in seconds (3-s window, 1-s overlap -> 2)")
     ap.add_argument("--min-dur", type=float, default=0.5, help="minimum event duration (s)")
     ap.add_argument("--out-dir", default="detections")
     args = ap.parse_args(argv)

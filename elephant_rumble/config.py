@@ -1,18 +1,25 @@
 """Shared constants for the elephant rumble (infrasound) detector.
 
-Elephant rumbles have a fundamental of roughly 8-35 Hz, harmonics that
-usually fade out below ~200 Hz, and last about 1-6 s. Audio is resampled to
-1 kHz and the model looks at 8-s windows so a whole rumble fits in one window.
+Follows the ELSENSE SincNet-LSTM design:
+  raw audio -> sliding window (3 s, 1 s overlap) -> balanced dataset
+  -> SincNet restricted to the elephant infrasound band (10-60 Hz) -> LSTM.
+
+Because only 10-60 Hz is used, audio is resampled to 250 Hz (Nyquist 125 Hz).
+Elephant rumbles last about 1-6 s, so a rumble can span several windows.
 """
 
-SAMPLE_RATE = 1000          # Hz, model input rate (recordings are resampled to this)
-CLIP_SECONDS = 8.0          # length of one model window (fits a 6-s rumble + context)
+SAMPLE_RATE = 250           # Hz, model input rate (recordings are resampled to this)
+CLIP_SECONDS = 3.0          # sliding-window length
+HOP_SECONDS = 2.0           # 3-s windows with 1-s overlap
 CLIP_SAMPLES = int(SAMPLE_RATE * CLIP_SECONDS)
 
-FRAME_HOP = 50              # samples per output frame (50 ms -> 20 frames/s)
+BAND_HZ = (10.0, 60.0)      # SincNet band-pass filters are kept inside this band
+
+FRAME_HOP = 50              # samples per LSTM output frame (0.2 s -> 15 frames/window)
 N_FRAMES = CLIP_SAMPLES // FRAME_HOP
 
 RUMBLE_SECONDS = (1.0, 6.0)  # duration range of synthetic rumbles
+MIN_RUMBLE_IN_WINDOW = 1.0   # a window is "positive" if >= this many seconds of rumble are inside
 
 # Band used to measure signal-to-noise ratio of rumbles (Hz)
-SNR_BAND = (5.0, 150.0)
+SNR_BAND = BAND_HZ

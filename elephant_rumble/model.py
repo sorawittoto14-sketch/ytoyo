@@ -1,10 +1,9 @@
 """SincNet front-end + bidirectional LSTM for elephant rumble detection.
 
-Raw waveform (1 kHz) --> SincConv (learnable band-pass filters, initialised on
-a log scale over 5-250 Hz, so most filters sit in the infrasound/rumble band)
---> |.| --> pooling + log compression --> two 1-D conv blocks (down to
-20 frames/s) --> 2-layer BiLSTM that follows the temporal shape of the call
-(rumbles last ~1-6 s) --> per-frame rumble logit.
+Raw waveform (250 Hz) --> SincConv (learnable band-pass filters kept inside
+the elephant infrasound band, 10-60 Hz) --> |.| --> pooling + log compression
+--> two 1-D conv blocks (down to 5 frames/s) --> 2-layer BiLSTM that follows
+the temporal shape of the call --> per-frame rumble logit.
 
 The window ("clip") score is the maximum frame score, so the same network
 gives both "is there a rumble in this window?" and where it starts/ends.
@@ -20,25 +19,26 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from .config import FRAME_HOP, SAMPLE_RATE
+from .config import BAND_HZ, FRAME_HOP, SAMPLE_RATE
 
 
 class SincConv(nn.Module):
     """1-D convolution whose kernels are parametrised band-pass sinc filters.
 
     Only two numbers per filter are learned: the low cut-off and the bandwidth.
+    Every filter is constrained to lie inside [f_low, f_high].
     """
 
     def __init__(self, n_filters=32, kernel_size=251, sample_rate=SAMPLE_RATE,
-                 f_low=5.0, f_high=250.0, min_low_hz=2.0, min_band_hz=3.0):
+                 f_low=BAND_HZ[0], f_high=BAND_HZ[1], min_band_hz=2.0):
         super().__init__()
         if kernel_size % 2 == 0:
             kernel_size += 1
         self.kernel_size, self.sample_rate = kernel_size, sample_rate
-        self.min_low_hz, self.min_band_hz = min_low_hz, min_band_hz
+        self.f_low, self.f_high, self.min_band_hz = f_low, f_high, min_band_hz
 
         edges = np.geomspace(f_low, f_high, n_filters + 1)
-        self.low_hz_ = nn.Parameter(torch.tensor(edges[:-1] - min_low_hz, dtype=torch.float32).view(-1, 1))
+        self.low_hz_ = nn.Parameter(torch.tensor(edges[:-1] - f_low, dtype=torch.float32).view(-1, 1))
         band = np.maximum(np.diff(edges) - min_band_hz, 0.5)
         self.band_hz_ = nn.Parameter(torch.tensor(band, dtype=torch.float32).view(-1, 1))
 
@@ -48,8 +48,8 @@ class SincConv(nn.Module):
         self.register_buffer("n_", 2 * math.pi * torch.arange(-half, 0).view(1, -1) / sample_rate)
 
     def cutoffs(self):
-        low = self.min_low_hz + self.low_hz_.abs()
-        high = torch.clamp(low + self.min_band_hz + self.band_hz_.abs(), self.min_low_hz, self.sample_rate / 2)
+        low = torch.clamp(self.f_low + self.low_hz_.abs(), max=self.f_high - self.min_band_hz)
+        high = torch.clamp(low + self.min_band_hz + self.band_hz_.abs(), max=self.f_high)
         return low, high
 
     def filters(self):
@@ -89,9 +89,9 @@ class SincLSTM(nn.Module):
         x = wav - wav.mean(-1, keepdim=True)
         x = x / (x.std(-1, keepdim=True) + 1e-6)          # gain invariance
         h = self.sinc(x.unsqueeze(1)).abs()                # band envelopes
-        h = F.avg_pool1d(h, 5)                             # 1000 -> 200 Hz
+        h = F.avg_pool1d(h, 5)                             # 250 -> 50 Hz
         h = self.norm0(torch.log1p(10 * h))                # log compression
-        h = self.conv(h)                                   # 200 -> 20 frames/s
+        h = self.conv(h)                                   # 50 -> 5 frames/s
         h, _ = self.lstm(h.transpose(1, 2))                # (B, T, 2*hidden)
         return self.frame_head(self.drop(h)).squeeze(-1)   # (B, T)
 

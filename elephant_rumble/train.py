@@ -86,7 +86,7 @@ def synthetic_breakdown(ds, prob, threshold) -> dict:
         sel = [i for i in pos if lo <= ds.meta[i]["snr_db"] < hi]
         if sel:
             out["recall_by_snr"][f"{lo}..{hi} dB"] = {"n": len(sel), "recall": float(np.mean(prob[sel] >= threshold))}
-    for lo, hi in [(0, 2), (2, 4), (4, 6.1)]:
+    for lo, hi in [(0, 1.5), (1.5, 2.5), (2.5, 3.1)]:
         sel = [i for i in pos if lo <= (ds.meta[i]["segments"][0][1] - ds.meta[i]["segments"][0][0]) / config.SAMPLE_RATE < hi]
         if sel:
             out["recall_by_duration"][f"{lo}-{hi:g} s in window"] = {"n": len(sel), "recall": float(np.mean(prob[sel] >= threshold))}
@@ -166,7 +166,7 @@ def main(argv=None):
     thr = best_f1_threshold(y_val, p_val)
     y_test, fy_test = _arrays(test)
     p_test, fp_test = predict(model, test)
-    low, high = model.sinc.cutoffs()
+    low, high = (v.detach() for v in model.sinc.cutoffs())
     result = {"test_clip": binary_report(y_test, p_test, thr), "test_frame": frame_report(fy_test, fp_test, thr),
               "val_best_auc": best, "threshold": thr,
               "learned_sinc_bands_hz": [[round(float(a), 1), round(float(b), 1)] for a, b in zip(low[:, 0], high[:, 0])],
