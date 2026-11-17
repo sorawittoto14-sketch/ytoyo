@@ -1,7 +1,7 @@
 """Detect elephant rumbles in long recordings and write Raven selection tables.
 
     python -m elephant_rumble.detect recording.wav [more.wav ...] \
-        --model models/sinc_lstm_elp.pt --out-dir detections/
+        --model models/sincnet_lstm_real_elephant_data.pt --out-dir detections/
 
 The file is streamed in blocks and scanned with sliding windows
 (3-s windows, 1-s overlap). The SincNet+LSTM model outputs a rumble probability
@@ -105,7 +105,7 @@ def write_raven(events, path, low_hz=BAND_HZ[0], high_hz=BAND_HZ[1]):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("audio", nargs="+")
-    ap.add_argument("--model", default="models/sinc_lstm_elp.pt")
+    ap.add_argument("--model", default="models/sincnet_lstm_real_elephant_data.pt")
     ap.add_argument("--threshold", type=float, default=DETECT_THRESHOLD, help="frame probability threshold")
     ap.add_argument("--hop", type=float, default=HOP_SECONDS, help="window hop in seconds (3-s window, 1-s overlap -> 2)")
     ap.add_argument("--min-dur", type=float, default=DETECT_MIN_DURATION, help="minimum event duration (s)")

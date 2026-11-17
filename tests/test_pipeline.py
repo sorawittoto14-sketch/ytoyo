@@ -117,3 +117,11 @@ def test_score_file_blocks_match_single_pass(tmp_path):
     assert blocked.shape == (130 * SAMPLE_RATE // FRAME_HOP,)
     assert np.isfinite(blocked).all() and (blocked > 0).all()
     assert np.abs(blocked - single).max() < 1e-4
+
+
+def test_onnx_export_matches_torch(tmp_path):
+    from elephant_rumble.export_onnx import export
+    model_path = tmp_path / "m.pt"
+    torch.save({"state_dict": SincLSTM().state_dict(), "arch": {}, "threshold": 0.5}, model_path)
+    res = export(model_path, str(tmp_path / "m.onnx"))
+    assert res["output_shape"] == [64, N_FRAMES] and res["max_abs_diff_frames"] < 1e-4

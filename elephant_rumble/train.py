@@ -6,7 +6,7 @@ Synthetic data (default)::
 
 Real Cornell ELP rumbles (download first with ``python -m elephant_rumble.elp``)::
 
-    python -m elephant_rumble.train --data elp:data/elp --init models/sinc_lstm.pt --lr 1e-3 --out models/sinc_lstm_elp.pt
+    python -m elephant_rumble.train --data elp:data/elp --init models/sinc_lstm.pt --lr 1e-3 --out models/sincnet_lstm_real_elephant_data.pt
 
 Real clips in ``DIR/pos`` and ``DIR/neg`` (80/10/10 random split; synthetic
 defaults are also 80/10/10: 20,000 / 2,500 / 2,500), optionally

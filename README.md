@@ -10,7 +10,7 @@ Raw Audio → Sliding Window (3 s, overlap 1 s) → Balanced Dataset → SincNet
 
 | ไฟล์ | เทรนด้วย | ใช้เมื่อ |
 |---|---|---|
-| `models/sinc_lstm_elp.pt` | **เสียงช้างจริง** (Cornell ELP, ช้างป่าแอฟริกา ประเทศคองโก) เริ่มจากโมเดลเสียงจำลอง | **ค่าเริ่มต้น ใช้ตัวนี้** |
+| `models/sincnet_lstm_real_elephant_data.pt` | **เสียงช้างจริง** (Cornell ELP, ช้างป่าแอฟริกา ประเทศคองโก) เริ่มจากโมเดลเสียงจำลอง | **ค่าเริ่มต้น ใช้ตัวนี้** |
 | `models/sinc_lstm.pt` | เสียงช้างจำลอง (synthetic) | ใช้เป็นจุดเริ่มต้นสำหรับ fine-tune |
 
 ## โมเดล
@@ -46,7 +46,7 @@ Loss = BCE ระดับหน้าต่าง + BCE ระดับเฟ�
 
 | โมเดล | Accuracy | Precision | Recall | AUC |
 |---|---|---|---|---|
-| `sinc_lstm_elp.pt` (จำลอง → fine-tune เสียงจริง) | **96.3 %** | **97.5 %** | **95.1 %** | 0.991 |
+| `sincnet_lstm_real_elephant_data.pt` (จำลอง → fine-tune เสียงจริง) | **96.3 %** | **97.5 %** | **95.1 %** | 0.991 |
 | เทรนเสียงจริงอย่างเดียว (ไม่ใช้เสียงจำลอง) | 96.9 % | 98.9 % | 94.8 % | 0.992 |
 | `sinc_lstm.pt` (เสียงจำลองอย่างเดียว) | 71.0 % | 89.2 % | 47.7 % | 0.806 |
 | โปสเตอร์ ELSENSE (ข้อมูลของโปสเตอร์) | 83.12 % | 85.40 % | 81.25 % | – |
@@ -64,7 +64,7 @@ Loss = BCE ระดับหน้าต่าง + BCE ระดับเฟ�
 | 0.9 | 92.1 % | 1.2 |
 
 เวลาเริ่ม/จบคลาดเคลื่อน (median) ~0.2–0.6 วินาที · บาง “false alarm” อาจเป็นเสียงช้างจริงที่ไม่ได้ label ไว้ · ประเมินซ้ำได้ด้วย
-`elephant_rumble.elp.evaluate_day(model, filename)` · ผลละเอียด: `models/sinc_lstm_elp.metrics.json`, `models/sinc_lstm_elp.day_eval.json`
+`elephant_rumble.elp.evaluate_day(model, filename)` · ผลละเอียด: `models/sincnet_lstm_real_elephant_data.metrics.json`, `models/sincnet_lstm_real_elephant_data.day_eval.json`
 
 > ⚠️ ข้อมูลเป็น **ช้างป่าแอฟริกา (forest elephant)** ในป่าคองโก ช้างเอเชียในไทยและเสียงรบกวนในพื้นที่ (รถ เครื่องสูบน้ำ ฯลฯ) ต่างกัน
 > ควร fine-tune ต่อด้วยเสียงที่อัดจากอุปกรณ์ ELSENSE ในพื้นที่จริง และปรับ threshold ก่อนใช้แจ้งเตือน
@@ -78,11 +78,11 @@ pip install -r requirements.txt
 # ตรวจจับเสียงช้างในไฟล์เสียง (wav/flac, sample rate ใดก็ได้, ยาวเป็นวันได้)
 python -m elephant_rumble.detect recording.wav --out-dir detections/
 #   → detections/recording.rumbles.txt  (Raven selection table เปิดดูใน Raven Pro ได้)
-#   ใช้ models/sinc_lstm_elp.pt, ปรับ --threshold (ค่าเริ่มต้น 0.8) และ --min-dur (1.0 s) ให้เหมาะกับพื้นที่
+#   ใช้ models/sincnet_lstm_real_elephant_data.pt, ปรับ --threshold (ค่าเริ่มต้น 0.8) และ --min-dur (1.0 s) ให้เหมาะกับพื้นที่
 
 # ดาวน์โหลดเสียงช้างจริง + เทรน (80/10/10)
 python -m elephant_rumble.elp --out data/elp
-python -m elephant_rumble.train --data elp:data/elp --init models/sinc_lstm.pt --lr 1e-3 --out models/sinc_lstm_elp.pt
+python -m elephant_rumble.train --data elp:data/elp --init models/sinc_lstm.pt --lr 1e-3 --out models/sincnet_lstm_real_elephant_data.pt
 
 # เทรนด้วยเสียงจำลอง (20,000 / 2,500 / 2,500)
 python -m elephant_rumble.train
@@ -92,6 +92,25 @@ python -m elephant_rumble.demo_long --minutes 30 --rumbles 40
 
 python -m pytest -q tests
 ```
+
+## ONNX (สำหรับอุปกรณ์ / Edge)
+
+`models/sincnet_lstm_real_elephant_data.onnx` — แปลงจากโมเดลเสียงช้างจริง (ผลตรงกับ PyTorch, ต่างกัน < 1e-6)
+
+| | ชื่อ | รูปร่าง |
+|---|---|---|
+| input | `audio` | float32 `(batch, 750)` = เสียง 3 วินาที @ 250 Hz |
+| output | `frame_probs` | float32 `(batch, 15)` = ความน่าจะเป็นมีเสียงช้าง ทุก 0.2 วินาที |
+| output | `window_prob` | float32 `(batch,)` = มีเสียงช้างในหน้าต่างนี้ไหม |
+
+```python
+import onnxruntime as ort
+sess = ort.InferenceSession("sincnet_lstm_real_elephant_data.onnx")
+frame_probs, window_prob = sess.run(None, {"audio": windows})   # windows: (N, 750) float32
+```
+ก่อนส่งเข้าโมเดล: ใช้ช่องแรก → low-pass + resample เป็น 250 Hz → ตัดหน้าต่าง 3 วินาที ทุก 2 วินาที
+ข้อมูลที่มาของโมเดล (เสียงจริง / ชนิดช้าง / แหล่งข้อมูล / ผลทดสอบ) อยู่ใน metadata ของไฟล์ ONNX และ `model_info` ใน `.pt`
+สร้างใหม่ได้ด้วย `python -m elephant_rumble.export_onnx`
 
 ## เทรนด้วยข้อมูลจริง
 
@@ -117,8 +136,10 @@ elephant_rumble/
   model.py      SincConv + SincLSTM
   train.py      เทรน/ประเมินผล
   detect.py     สแกนไฟล์ยาวแบบ sliding window → ตาราง Raven
+  export_onnx.py แปลงโมเดลเป็น ONNX + ตรวจผลเทียบ PyTorch
   elp.py        ดาวน์โหลดเสียงช้างจริง (Cornell ELP) + แบ่ง 80/10/10 + ประเมินไฟล์ 24 ชม.
   demo_long.py  ประเมินระดับเหตุการณ์บนไฟล์ยาวจำลอง
-models/sinc_lstm_elp.pt  โมเดลเสียงจริง (ค่าเริ่มต้น)
+models/sincnet_lstm_real_elephant_data.pt    โมเดลเสียงช้างจริง ข้อมูลจริง (ค่าเริ่มต้น)
+models/sincnet_lstm_real_elephant_data.onnx  ตัวเดียวกันในรูปแบบ ONNX
 models/sinc_lstm.pt      โมเดลเสียงจำลอง
 ```

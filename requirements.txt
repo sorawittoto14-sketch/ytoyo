@@ -3,3 +3,6 @@ numpy>=1.26
 scipy>=1.11
 soundfile>=0.12
 pytest>=8
+onnx>=1.16
+onnxruntime>=1.18
+onnxscript
