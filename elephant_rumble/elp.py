@@ -250,3 +250,28 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
+
+
+def evaluate_day(model_path, filename, threshold=None, min_dur=None, chunk_min=30.0):
+    """Run the detector over a whole 24-h ELP file (streamed from S3) and
+    compare events with the expert labels: event recall and false alarms/hour."""
+    from .config import DETECT_MIN_DURATION, DETECT_THRESHOLD
+    from .demo_long import match
+    from .detect import frame_timeline, load_model, timeline_to_events
+
+    model, _ = load_model(model_path)
+    wav = RemoteWav(filename)
+    parts, t = [], 0.0
+    while t < wav.duration:
+        parts.append(wav.read(t, chunk_min * 60))
+        t += chunk_min * 60
+    tl = frame_timeline(model, np.concatenate(parts).astype(np.float64))
+    truth = load_labels()[filename]
+    hours = wav.duration / 3600
+    out = {}
+    for thr in ([threshold] if threshold else [0.5, 0.6, 0.7, 0.8, 0.9]):
+        ev = timeline_to_events(tl, thr, min_dur or DETECT_MIN_DURATION)
+        r = match(truth, [(b, e) for b, e, _ in ev])
+        r["false_alarms_per_hour"] = r["false_alarms"] / hours
+        out[thr] = r
+    return out
