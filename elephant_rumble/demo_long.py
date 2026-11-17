@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 import soundfile as sf
 
-from .config import SAMPLE_RATE
+from .config import DETECT_MIN_DURATION, DETECT_THRESHOLD, SAMPLE_RATE
 from .detect import load_model, score_file, timeline_to_events, write_raven
 from .synth import make_long_recording
 
@@ -43,8 +43,8 @@ def main(argv=None):
     sf.write(wav, audio, SAMPLE_RATE)
     write_raven([(b, e, 1.0) for b, e in truth], out / "synthetic_recording.truth.txt")
 
-    model, thr = load_model(args.model)
-    found = timeline_to_events(score_file(model, wav), thr)
+    model, _ = load_model(args.model)
+    found = timeline_to_events(score_file(model, wav), DETECT_THRESHOLD, DETECT_MIN_DURATION)
     write_raven(found, out / "synthetic_recording.rumbles.txt")
     res = match(truth, [(b, e) for b, e, _ in found])
     res["false_alarms_per_hour"] = res["false_alarms"] / (args.minutes / 60)

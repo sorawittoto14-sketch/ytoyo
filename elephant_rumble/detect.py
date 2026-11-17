@@ -17,7 +17,7 @@ import numpy as np
 import soundfile as sf
 import torch
 
-from .config import BAND_HZ, CLIP_SAMPLES, FRAME_HOP, HOP_SECONDS, N_FRAMES, SAMPLE_RATE
+from .config import BAND_HZ, CLIP_SAMPLES, DETECT_MIN_DURATION, DETECT_THRESHOLD, FRAME_HOP, HOP_SECONDS, N_FRAMES, SAMPLE_RATE
 from .features import fit_length, resample
 from .model import SincLSTM
 
@@ -106,14 +106,14 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("audio", nargs="+")
     ap.add_argument("--model", default="models/sinc_lstm.pt")
-    ap.add_argument("--threshold", type=float, help="default: value stored in the checkpoint")
+    ap.add_argument("--threshold", type=float, default=DETECT_THRESHOLD, help="frame probability threshold")
     ap.add_argument("--hop", type=float, default=HOP_SECONDS, help="window hop in seconds (3-s window, 1-s overlap -> 2)")
-    ap.add_argument("--min-dur", type=float, default=0.5, help="minimum event duration (s)")
+    ap.add_argument("--min-dur", type=float, default=DETECT_MIN_DURATION, help="minimum event duration (s)")
     ap.add_argument("--out-dir", default="detections")
     args = ap.parse_args(argv)
 
-    model, thr = load_model(args.model)
-    thr = args.threshold if args.threshold is not None else thr
+    model, _ = load_model(args.model)
+    thr = args.threshold
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     for path in args.audio:
