@@ -4,7 +4,12 @@ Synthetic data (default)::
 
     python -m elephant_rumble.train --out models/sinc_lstm.pt
 
-Real clips in ``DIR/pos`` and ``DIR/neg`` (80/10/10 random split), optionally
+Real Cornell ELP rumbles (download first with ``python -m elephant_rumble.elp``)::
+
+    python -m elephant_rumble.train --data elp:data/elp --init models/sinc_lstm.pt --lr 1e-3 --out models/sinc_lstm_elp.pt
+
+Real clips in ``DIR/pos`` and ``DIR/neg`` (80/10/10 random split; synthetic
+defaults are also 80/10/10: 20,000 / 2,500 / 2,500), optionally
 starting from the synthetic model::
 
     python -m elephant_rumble.train --data DIR --init models/sinc_lstm.pt --lr 5e-4
@@ -69,6 +74,11 @@ def build_datasets(args):
         test = synthetic_dataset(args.n_test, seed=3)
         print(f"generated synthetic data in {time.time() - t0:.0f}s")
         return train, val, test
+    if args.data.startswith("elp:"):
+        from .elp import ELPWindows, summary
+        root = args.data[4:]
+        summary(root)
+        return ELPWindows(root, "train", train=True), ELPWindows(root, "val"), ELPWindows(root, "test")
     full = folder_dataset(args.data)
     aug = WaveDataset(full.waves.numpy(), full.labels.numpy(), full.frames.numpy(), full.meta, augment=True)
     idx = np.random.default_rng(0).permutation(len(full))
@@ -109,11 +119,12 @@ def loss_fn(frame_logits, y, fy, frame_weight):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--data", default="synthetic", help="'synthetic' or a folder with pos/ and neg/")
-    ap.add_argument("--n-train", type=int, default=6000)
-    ap.add_argument("--n-val", type=int, default=800)
-    ap.add_argument("--n-test", type=int, default=2000)
-    ap.add_argument("--epochs", type=int, default=12)
+    ap.add_argument("--data", default="synthetic",
+                    help="'synthetic', 'elp:DIR' (real Cornell ELP data from elephant_rumble.elp) or a folder with pos/ and neg/")
+    ap.add_argument("--n-train", type=int, default=20000)
+    ap.add_argument("--n-val", type=int, default=2500)
+    ap.add_argument("--n-test", type=int, default=2500)
+    ap.add_argument("--epochs", type=int, default=30)
     ap.add_argument("--batch", type=int, default=32)
     ap.add_argument("--lr", type=float, default=2e-3)
     ap.add_argument("--frame-weight", type=float, default=1.0)
