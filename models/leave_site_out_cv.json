@@ -1,0 +1,41 @@
+{
+  "description": "leave-site-out cross-validation: each fold holds out whole recorder clusters (never heard in training); val = nn04+nn05",
+  "folds": [
+    {
+      "fold": "A",
+      "held_out_sites": "nn02+nn09",
+      "n": 784,
+      "accuracy": 0.9681122448979592,
+      "precision": 0.97911227154047,
+      "recall": 0.9566326530612245,
+      "roc_auc": 0.9890995939192003
+    },
+    {
+      "fold": "B",
+      "held_out_sites": "nn03",
+      "n": 918,
+      "accuracy": 0.9607843137254902,
+      "precision": 0.9710467706013363,
+      "recall": 0.9498910675381264,
+      "roc_auc": 0.9912759100251091
+    },
+    {
+      "fold": "C",
+      "held_out_sites": "nn08",
+      "n": 934,
+      "accuracy": 0.9582441113490364,
+      "precision": 0.9713656387665198,
+      "recall": 0.9443254817987152,
+      "roc_auc": 0.9893346294402744
+    },
+    {
+      "fold": "D",
+      "held_out_sites": "nn10+nn07",
+      "n": 814,
+      "accuracy": 0.9742014742014742,
+      "precision": 0.9800995024875622,
+      "recall": 0.9680589680589681,
+      "roc_auc": 0.9961847038014114
+    }
+  ]
+}
