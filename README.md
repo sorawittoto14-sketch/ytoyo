@@ -6,9 +6,12 @@
 Raw Audio → Sliding Window (3 s, overlap 1 s) → Balanced Dataset → SincNet (10–60 Hz) → LSTM → ผลตรวจจับ
 ```
 
-> ⚠️ **โมเดลใน `models/sinc_lstm.pt` เทรนด้วยเสียงช้างจำลอง (synthetic)** เพราะข้อมูลเสียงช้างจริงที่มี label
-> (เช่น Cornell Elephant Listening Project) ต้องขอสิทธิ์ก่อนใช้ ตัวเลขด้านล่างจึงยังไม่ใช่ผลกับเสียงจริงในภาคสนาม —
-> ให้เทรนต่อ (fine-tune) ด้วยเสียงจริงก่อนนำไปใช้งาน (ดูหัวข้อ “เทรนด้วยข้อมูลจริง”)
+มี 2 โมเดล:
+
+| ไฟล์ | เทรนด้วย | ใช้เมื่อ |
+|---|---|---|
+| `models/sinc_lstm_elp.pt` | **เสียงช้างจริง** (Cornell ELP, ช้างป่าแอฟริกา ประเทศคองโก) เริ่มจากโมเดลเสียงจำลอง | **ค่าเริ่มต้น ใช้ตัวนี้** |
+| `models/sinc_lstm.pt` | เสียงช้างจำลอง (synthetic) | ใช้เป็นจุดเริ่มต้นสำหรับ fine-tune |
 
 ## โมเดล
 
@@ -22,22 +25,49 @@ Raw Audio → Sliding Window (3 s, overlap 1 s) → Balanced Dataset → SincNet
 
 Loss = BCE ระดับหน้าต่าง + BCE ระดับเฟรม (เมื่อรู้ตำแหน่งเสียงช้าง เช่นจากข้อมูลจำลองหรือตาราง Raven) · พารามิเตอร์ ~197k
 
-## ผลลัพธ์ (ชุดทดสอบเสียงจำลอง 4,000 หน้าต่าง, สมดุล 50/50)
+## ข้อมูลจริง (Cornell Elephant Listening Project)
 
-| | โมเดลนี้ (เสียงจำลอง) | โปสเตอร์ (เสียงจริง) |
+- **เสียง**: ไฟล์บันทึก 24 ชม. จากเครือข่ายเครื่องบันทึกเสียงอุทยาน Nouabalé-Ndoki ประเทศคองโก (8 kHz) เปิดให้ใช้ฟรีบน AWS Open Data
+  `s3://congo8khz-pnnn` — ต้องให้เครดิต “Cornell Elephant Listening Project”
+- **Label**: ตาราง Raven ที่ผู้เชี่ยวชาญระบุตำแหน่ง rumble จาก repo `statlogic/Elephant-Rumble-Detection` → **3,938 rumbles ใน 163 ไฟล์ (163 วัน)**
+- ดาวน์โหลดเฉพาะช่วงเวลาที่ต้องใช้ด้วย HTTP Range (~91 MB แทนที่จะเป็น ~225 GB): `python -m elephant_rumble.elp --out data/elp` (~5 นาที)
+- ตัวอย่างลบ (ไม่มีช้าง) สุ่มจากไฟล์เดียวกัน ห่างจาก rumble ที่ label ไว้ ≥ 10 วินาที จำนวนเท่ากับตัวอย่างบวก (Balanced)
+- **แบ่ง 80/10/10 ตามไฟล์ (วันบันทึก)** เพื่อไม่ให้เสียงวันเดียวกันอยู่ทั้งใน train และ test:
+
+| ชุด | ไฟล์ (วัน) | rumbles | หน้าต่างไม่มีช้าง |
+|---|---|---|---|
+| Train | 131 | 3,276 | 3,276 |
+| Val | 16 | 297 | 297 |
+| Test | 16 | 365 | 365 |
+
+## ผลลัพธ์บนเสียงจริง (ชุด Test — 16 วันที่โมเดลไม่เคยเห็น)
+
+**ระดับหน้าต่าง 3 วินาที (730 หน้าต่าง, สมดุล)**
+
+| โมเดล | Accuracy | Precision | Recall | AUC |
+|---|---|---|---|---|
+| `sinc_lstm_elp.pt` (จำลอง → fine-tune เสียงจริง) | **96.3 %** | **97.5 %** | **95.1 %** | 0.991 |
+| เทรนเสียงจริงอย่างเดียว (ไม่ใช้เสียงจำลอง) | 96.9 % | 98.9 % | 94.8 % | 0.992 |
+| `sinc_lstm.pt` (เสียงจำลองอย่างเดียว) | 71.0 % | 89.2 % | 47.7 % | 0.806 |
+| โปสเตอร์ ELSENSE (ข้อมูลของโปสเตอร์) | 83.12 % | 85.40 % | 81.25 % | – |
+
+→ เสียงจำลองอย่างเดียวไม่พอ (recall 48 %) ต้องเทรนด้วยเสียงจริง · ข้อมูลต่างชุดกับโปสเตอร์ จึงเทียบกันตรง ๆ ไม่ได้
+
+**ระดับการใช้งานจริง: สแกนไฟล์ 24 ชม. เต็มวัน 3 วันจากชุด Test (72 ชม., 203 rumbles)**
+
+| threshold | ตรวจพบ rumble | false alarm / ชม. |
 |---|---|---|
-| Accuracy | 89.6 % | 83.12 % |
-| Precision | 93.5 % | 85.40 % |
-| Recall | 85.1 % | 81.25 % |
-| F1 / ROC-AUC | 0.891 / 0.962 | – |
+| 0.5 | 96.1 % | 10.2 |
+| 0.6 | 95.1 % | 6.5 |
+| 0.7 | 94.1 % | 4.3 |
+| **0.8 (ค่าเริ่มต้น)** | **93.1 %** | **2.5** |
+| 0.9 | 92.1 % | 1.2 |
 
-ข้อมูลต่างกัน จึง **เทียบกันตรง ๆ ไม่ได้** เพราะเสียงจำลองอาจง่ายกว่าเสียงจริง
+เวลาเริ่ม/จบคลาดเคลื่อน (median) ~0.2–0.6 วินาที · บาง “false alarm” อาจเป็นเสียงช้างจริงที่ไม่ได้ label ไว้ · ประเมินซ้ำได้ด้วย
+`elephant_rumble.elp.evaluate_day(model, filename)` · ผลละเอียด: `models/sinc_lstm_elp.metrics.json`, `models/sinc_lstm_elp.day_eval.json`
 
-- Recall แยกตาม SNR (10–60 Hz): −6…−2 dB 66 % · −2…2 dB 86 % · 2…6 dB 91 % · 6…12 dB 93 %
-- False positive ตามเสียงรบกวน: ไม่มีสิ่งรบกวน 3.6 % · ลม 3.7 % · แมลง 6.7 % · ฟ้าร้อง 9.1 % · เครื่องยนต์ 11.4 % · เครื่องบิน 12.8 %
-- **ไฟล์เสียงยาว 30 นาที (มีเสียงช้าง 40 ครั้ง)**: ตรวจพบ 38/40 (95 %), เวลาเริ่ม/จบคลาดเคลื่อนเฉลี่ย (median) ~0.2 s, แต่ยังมี false alarm ~82 ครั้ง/ชม. — ต้องปรับ threshold กับเสียงจริงในพื้นที่
-
-ดูรายละเอียดทั้งหมดใน `models/sinc_lstm.metrics.json` (รวมช่วงความถี่ที่ SincNet เรียนรู้ได้)
+> ⚠️ ข้อมูลเป็น **ช้างป่าแอฟริกา (forest elephant)** ในป่าคองโก ช้างเอเชียในไทยและเสียงรบกวนในพื้นที่ (รถ เครื่องสูบน้ำ ฯลฯ) ต่างกัน
+> ควร fine-tune ต่อด้วยเสียงที่อัดจากอุปกรณ์ ELSENSE ในพื้นที่จริง และปรับ threshold ก่อนใช้แจ้งเตือน
 
 ## การใช้งาน
 
@@ -48,10 +78,14 @@ pip install -r requirements.txt
 # ตรวจจับเสียงช้างในไฟล์เสียง (wav/flac, sample rate ใดก็ได้, ยาวเป็นวันได้)
 python -m elephant_rumble.detect recording.wav --out-dir detections/
 #   → detections/recording.rumbles.txt  (Raven selection table เปิดดูใน Raven Pro ได้)
-#   ปรับ --threshold (ค่าเริ่มต้น 0.6) และ --min-dur (1.0 s) ให้เหมาะกับพื้นที่
+#   ใช้ models/sinc_lstm_elp.pt, ปรับ --threshold (ค่าเริ่มต้น 0.8) และ --min-dur (1.0 s) ให้เหมาะกับพื้นที่
 
-# เทรนใหม่ด้วยเสียงจำลอง (~7 นาทีบน CPU 4 คอร์)
-python -m elephant_rumble.train --n-train 20000 --n-val 2000 --n-test 4000 --epochs 30
+# ดาวน์โหลดเสียงช้างจริง + เทรน (80/10/10)
+python -m elephant_rumble.elp --out data/elp
+python -m elephant_rumble.train --data elp:data/elp --init models/sinc_lstm.pt --lr 1e-3 --out models/sinc_lstm_elp.pt
+
+# เทรนด้วยเสียงจำลอง (20,000 / 2,500 / 2,500)
+python -m elephant_rumble.train
 
 # ทดสอบตัวตรวจจับกับไฟล์ยาวจำลอง
 python -m elephant_rumble.demo_long --minutes 30 --rumbles 40
@@ -83,6 +117,8 @@ elephant_rumble/
   model.py      SincConv + SincLSTM
   train.py      เทรน/ประเมินผล
   detect.py     สแกนไฟล์ยาวแบบ sliding window → ตาราง Raven
+  elp.py        ดาวน์โหลดเสียงช้างจริง (Cornell ELP) + แบ่ง 80/10/10 + ประเมินไฟล์ 24 ชม.
   demo_long.py  ประเมินระดับเหตุการณ์บนไฟล์ยาวจำลอง
-models/sinc_lstm.pt (+ .metrics.json)
+models/sinc_lstm_elp.pt  โมเดลเสียงจริง (ค่าเริ่มต้น)
+models/sinc_lstm.pt      โมเดลเสียงจำลอง
 ```

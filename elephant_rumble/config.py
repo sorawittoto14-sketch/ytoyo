@@ -24,7 +24,8 @@ MIN_RUMBLE_IN_WINDOW = 1.0   # a window is "positive" if >= this many seconds of
 # Band used to measure signal-to-noise ratio of rumbles (Hz)
 SNR_BAND = BAND_HZ
 
-# Long-recording detection defaults (tuned on a separate synthetic 60-min
-# recording; re-tune on real field data, where the background differs)
-DETECT_THRESHOLD = 0.6      # frame probability threshold
+# Long-recording detection defaults. 0.8 gave ~93 % event recall at ~2.5 false
+# alarms/hour on three full 24-h ELP test days with models/sinc_lstm_elp.pt;
+# re-tune for each deployment site (background noise differs).
+DETECT_THRESHOLD = 0.8      # frame probability threshold
 DETECT_MIN_DURATION = 1.0   # s; rumbles are >= ~1 s, shorter blips are dropped
