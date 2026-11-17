@@ -5,7 +5,7 @@ available. Real rumbles (e.g. Cornell Elephant Listening Project recordings)
 should replace it for any real-world use.
 
 Rumble model: harmonic stack with a fundamental of ~10-30 Hz, a curved
-(rise-then-fall) pitch contour, 1.5-5 s duration, soft attack/decay and
+(rise-then-fall) pitch contour, 1-6 s duration, soft attack/decay and
 random harmonic amplitudes (sometimes with a weak fundamental).
 
 Background: coloured (1/f^a) noise plus optional distractors that also live
@@ -20,7 +20,7 @@ in the infrasound band and make the task non-trivial:
 import numpy as np
 from scipy import signal
 
-from .config import CLIP_SAMPLES, SAMPLE_RATE, SNR_BAND
+from .config import CLIP_SAMPLES, RUMBLE_SECONDS, SAMPLE_RATE, SNR_BAND
 
 SR = SAMPLE_RATE
 
@@ -55,7 +55,7 @@ def _harmonic_stack(rng, f0: np.ndarray, n_harm: int, decay: float) -> np.ndarra
 
 def rumble(rng, duration: float | None = None) -> np.ndarray:
     """One synthetic rumble (unit RMS)."""
-    dur = duration if duration is not None else rng.uniform(1.5, 5.0)
+    dur = duration if duration is not None else rng.uniform(*RUMBLE_SECONDS)
     n = int(dur * SR)
     t = np.linspace(0, 1, n)
     f_start = rng.uniform(10, 24)
@@ -144,18 +144,19 @@ def background(rng, n: int = CLIP_SAMPLES) -> tuple[np.ndarray, list[str]]:
 def make_clip(rng, positive: bool, snr_db_range=(-6.0, 12.0)) -> tuple[np.ndarray, dict]:
     """One CLIP_SAMPLES-long clip at SAMPLE_RATE plus metadata."""
     x, used = background(rng)
-    meta = {"label": int(positive), "distractors": used, "snr_db": None}
+    meta = {"label": int(positive), "distractors": used, "snr_db": None, "segments": []}
     if positive:
         r = rumble(rng)
         r = r[: CLIP_SAMPLES]
-        # at least 1.2 s (or the whole rumble) must lie inside the clip
-        min_in = min(len(r), int(1.2 * SR))
+        # at least 1 s (or the whole rumble) must lie inside the clip
+        min_in = min(len(r), int(1.0 * SR))
         start = rng.integers(-(len(r) - min_in), CLIP_SAMPLES - min_in + 1)
         snr = rng.uniform(*snr_db_range)
         r = r * np.sqrt(10 ** (snr / 10) / _band_power(r))  # background band power == 1
         lo, hi = max(start, 0), min(start + len(r), CLIP_SAMPLES)
         x[lo:hi] += r[lo - start: hi - start]
         meta["snr_db"] = float(snr)
+        meta["segments"] = [(int(lo), int(hi))]  # rumble extent in samples
     x *= rng.uniform(0.01, 1.0)  # random gain
     return x.astype(np.float32), meta
 
@@ -171,7 +172,7 @@ def make_long_recording(seed: int, minutes: float = 10.0, n_rumbles: int = 12,
     chunks = [background(rng, CLIP_SAMPLES * 6)[0] for _ in range(int(np.ceil(n / (CLIP_SAMPLES * 6))))]
     x = np.concatenate(chunks)[:n]
     events = []
-    slots = np.sort(rng.choice(np.arange(5, int(minutes * 60) - 10, 12), n_rumbles, replace=False))
+    slots = np.sort(rng.choice(np.arange(5, int(minutes * 60) - 15, 15), n_rumbles, replace=False))
     for s in slots:
         r = rumble(rng)
         start = int((s + rng.uniform(0, 4)) * SR)
